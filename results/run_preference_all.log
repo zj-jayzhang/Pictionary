@@ -1,0 +1,343 @@
+[22:57:49] Models (7): anthropic/claude-haiku-4.5,             preference.py:461
+           openai/gpt-5.4-mini, openai/gpt-5-nano,                              
+           qwen/qwen3.5-flash-02-23,                                            
+           google/gemini-3.1-flash-lite-preview,                                
+           qwen/qwen3-vl-30b-a3b-thinking,                                      
+           qwen/qwen3-vl-8b-thinking | samples_per_cell=5                       
+────────────────────────── anthropic/claude-haiku-4.5 ──────────────────────────
+           Running 140 trials (7 pairs × 2 × 2 × 5).           preference.py:321
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+[23:00:39] Saved raw results to                                preference.py:369
+           preference_logs/anthropic_claude-haiku-4.5/run_2026                  
+           0416_230039.json                                                     
+
+             Modality preference — anthropic/claude-haiku-4.5              
+┏━━━━━━━━━━━━━━━━┳━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Pair           ┃   N ┃      Text wins ┃     Image wins ┃          Other ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ letter         │  20 │  10/20 = 50.0% │  10/20 = 50.0% │    0/20 = 0.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ word           │  20 │  10/20 = 50.0% │  10/20 = 50.0% │    0/20 = 0.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ language       │  20 │    0/20 = 0.0% │    0/20 = 0.0% │ 20/20 = 100.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ topic_sentence │  20 │   9/20 = 45.0% │    1/20 = 5.0% │  10/20 = 50.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ case           │  20 │  18/20 = 90.0% │    0/20 = 0.0% │   2/20 = 10.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ topic_explain  │  20 │   4/20 = 20.0% │    0/20 = 0.0% │  16/20 = 80.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ refusal        │  20 │  14/20 = 70.0% │   6/20 = 30.0% │    0/20 = 0.0% │
+├────────────────┼─────┼────────────────┼────────────────┼────────────────┤
+│ overall        │ 140 │ 65/140 = 46.4% │ 27/140 = 19.3% │ 48/140 = 34.3% │
+└────────────────┴─────┴────────────────┴────────────────┴────────────────┘
+───────────────────────────── openai/gpt-5.4-mini ──────────────────────────────
+           Running 140 trials (7 pairs × 2 × 2 × 5).           preference.py:321
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+[23:02:49] Saved raw results to                                preference.py:369
+           preference_logs/openai_gpt-5.4-mini/run_20260416_23                  
+           0249.json                                                            
+
+                Modality preference — openai/gpt-5.4-mini                 
+┏━━━━━━━━━━━━━━━━┳━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Pair           ┃   N ┃       Text wins ┃     Image wins ┃        Other ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ letter         │  20 │   14/20 = 70.0% │   6/20 = 30.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ word           │  20 │   10/20 = 50.0% │  10/20 = 50.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ language       │  20 │  20/20 = 100.0% │    0/20 = 0.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_sentence │  20 │  20/20 = 100.0% │    0/20 = 0.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ case           │  20 │   10/20 = 50.0% │  10/20 = 50.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_explain  │  20 │  20/20 = 100.0% │    0/20 = 0.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ refusal        │  20 │   10/20 = 50.0% │  10/20 = 50.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ overall        │ 140 │ 104/140 = 74.3% │ 36/140 = 25.7% │ 0/140 = 0.0% │
+└────────────────┴─────┴─────────────────┴────────────────┴──────────────┘
+────────────────────────────── openai/gpt-5-nano ───────────────────────────────
+           Running 140 trials (7 pairs × 2 × 2 × 5).           preference.py:321
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2

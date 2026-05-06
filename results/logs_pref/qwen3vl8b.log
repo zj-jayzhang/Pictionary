@@ -1,0 +1,168 @@
+[23:06:30] Models (1): qwen/qwen3-vl-8b-thinking |             preference.py:524
+           samples_per_cell=5 | judge=openai/gpt-5.4-mini                       
+────────────────────────── qwen/qwen3-vl-8b-thinking ───────────────────────────
+           Running 140 trials (7 pairs × 2 × 2 × 5).           preference.py:372
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+[23:16:34] Saved raw results to                                preference.py:424
+           preference_logs/qwen_qwen3-vl-8b-thinking/run_20260                  
+           416_231634.json                                                      
+
+             Modality preference — qwen/qwen3-vl-8b-thinking              
+┏━━━━━━━━━━━━━━━━┳━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Pair           ┃   N ┃       Text wins ┃     Image wins ┃        Other ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ letter         │  20 │   19/20 = 95.0% │    1/20 = 5.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ word           │  20 │   17/20 = 85.0% │   3/20 = 15.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ language       │  20 │   19/20 = 95.0% │    1/20 = 5.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_sentence │  20 │  20/20 = 100.0% │    0/20 = 0.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ case           │  20 │   13/20 = 65.0% │   7/20 = 35.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_explain  │  20 │   17/20 = 85.0% │   3/20 = 15.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ refusal        │  20 │   18/20 = 90.0% │   2/20 = 10.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ overall        │ 140 │ 123/140 = 87.9% │ 17/140 = 12.1% │ 0/140 = 0.0% │
+└────────────────┴─────┴─────────────────┴────────────────┴──────────────┘

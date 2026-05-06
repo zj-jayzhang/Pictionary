@@ -1,0 +1,168 @@
+[23:06:28] Models (1): google/gemini-3.1-flash-lite-preview |  preference.py:524
+           samples_per_cell=5 | judge=openai/gpt-5.4-mini                       
+───────────────────── google/gemini-3.1-flash-lite-preview ─────────────────────
+           Running 140 trials (7 pairs × 2 × 2 × 5).           preference.py:372
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+ ta=1 tf=1 s0
+ ta=1 tf=1 s1
+ ta=1 tf=1 s2
+ ta=1 tf=1 s3
+ ta=1 tf=1 s4
+ ta=1 tf=0 s0
+ ta=1 tf=0 s1
+ ta=1 tf=0 s2
+ ta=1 tf=0 s3
+ ta=1 tf=0 s4
+ ta=0 tf=1 s0
+ ta=0 tf=1 s1
+ ta=0 tf=1 s2
+ ta=0 tf=1 s3
+ ta=0 tf=1 s4
+ ta=0 tf=0 s0
+ ta=0 tf=0 s1
+ ta=0 tf=0 s2
+ ta=0 tf=0 s3
+ ta=0 tf=0 s4
+[23:14:36] Saved raw results to                                preference.py:424
+           preference_logs/google_gemini-3.1-flash-lite-previe                  
+           w/run_20260416_231436.json                                           
+
+        Modality preference — google/gemini-3.1-flash-lite-preview        
+┏━━━━━━━━━━━━━━━━┳━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
+┃ Pair           ┃   N ┃       Text wins ┃     Image wins ┃        Other ┃
+┡━━━━━━━━━━━━━━━━╇━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
+│ letter         │  20 │    9/20 = 45.0% │  11/20 = 55.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ word           │  20 │   18/20 = 90.0% │   2/20 = 10.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ language       │  20 │  20/20 = 100.0% │    0/20 = 0.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_sentence │  20 │   15/20 = 75.0% │   5/20 = 25.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ case           │  20 │   13/20 = 65.0% │   7/20 = 35.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ topic_explain  │  20 │   10/20 = 50.0% │  10/20 = 50.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ refusal        │  20 │   18/20 = 90.0% │   2/20 = 10.0% │  0/20 = 0.0% │
+├────────────────┼─────┼─────────────────┼────────────────┼──────────────┤
+│ overall        │ 140 │ 103/140 = 73.6% │ 37/140 = 26.4% │ 0/140 = 0.0% │
+└────────────────┴─────┴─────────────────┴────────────────┴──────────────┘

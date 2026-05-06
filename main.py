@@ -1,0 +1,89 @@
+"""Entry point for the image-as-defense injection experiment.
+
+Compares text vs image modality for untrusted document content against
+prompt-injection attacks. Writes per-sample JSON logs under
+``results/simple_inj_logs/<model>/...`` and an aggregate summary under
+``results/logs/injection/``.
+"""
+
+import argparse
+
+from dotenv import load_dotenv
+
+from helpers.runner import (
+    DEFAULT_MODEL_ID,
+    console,
+    get_active_model_id,
+    set_active_model_id,
+    set_render_style,
+)
+
+
+def parse_cli_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Prompt-injection benchmark. For each user task × injection × "
+            "attack template, runs the model under text and image conditions "
+            "and records InjectionTaskSuccess + UserTaskSuccess per sample."
+        )
+    )
+    parser.add_argument(
+        "--model",
+        "--model-id",
+        dest="model_id",
+        default=DEFAULT_MODEL_ID,
+        help=(
+            "Model id. `openai/*` routes to OpenAI directly if "
+            "OPENAI_API_KEY is set; `anthropic/*` routes to the Anthropic "
+            "API; everything else goes through OpenRouter."
+        ),
+    )
+    parser.add_argument(
+        "--chat-ui",
+        action="store_true",
+        default=False,
+        help="Render document images in chat-UI style instead of plain white.",
+    )
+    parser.add_argument(
+        "--task-type",
+        dest="task_type",
+        default=None,
+        help=(
+            "If set, only run user tasks whose task_type matches this string "
+            "(e.g. 'code_reading'). Index in the log dir is preserved from the "
+            "original INJECTION_USER_TASKS order."
+        ),
+    )
+    parser.add_argument(
+        "--template-idx",
+        dest="template_idx",
+        type=int,
+        default=None,
+        help=(
+            "If set, only run the attack template at this index (0..5). "
+            "Useful for re-running a single template after a template "
+            "definition change without redoing the rest of the matrix."
+        ),
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    load_dotenv()
+    args = parse_cli_args()
+    set_active_model_id(args.model_id)
+    if args.chat_ui:
+        set_render_style("chat")
+        console.log("[yellow]Render style: chat-UI[/yellow]")
+
+    console.log(f"Using model: [bold]{get_active_model_id()}[/bold]")
+
+    from injection.runner import run_injection_scenario
+    run_injection_scenario(
+        task_type_filter=args.task_type,
+        template_idx_filter=args.template_idx,
+    )
+
+
+if __name__ == "__main__":
+    main()

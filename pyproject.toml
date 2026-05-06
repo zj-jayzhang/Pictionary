@@ -1,0 +1,13 @@
+[project]
+name = "image-as-defense"
+version = "0.1.0"
+description = "Does rendering untrusted content as an image defend against prompt injection?"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "openai>=2.0.0",
+    "pillow>=11.0.0",
+    "python-dotenv>=1.0.0",
+    "rich>=14.0.0",
+]
