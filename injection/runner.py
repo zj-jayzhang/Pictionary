@@ -408,6 +408,7 @@ def _write_sample_log(
 def run_injection_scenario(
     task_type_filter: str | None = None,
     template_idx_filter: int | None = None,
+    log_root: str | None = None,
 ) -> None:
     """Run the full (user_task × injection × template × condition) matrix.
 
@@ -419,15 +420,26 @@ def run_injection_scenario(
     is run. The original index is preserved (so per-sample logs still write
     to the same ``template_<i>/`` directory) — useful for re-running a single
     template after its definition changes.
+
+    If ``log_root`` is set, per-sample logs land under ``<log_root>/`` and
+    aggregate run summaries under ``<log_root>/_summaries/``. Otherwise the
+    default split between ``results/simple_inj_logs/`` (per-sample) and
+    ``results/logs/injection/`` (aggregate) is used.
     """
     model_id = get_active_model_id()
     backend = "Anthropic" if model_id.startswith("anthropic/") else "OpenAI/OpenRouter"
     model_short = model_id.replace("/", "_")
-    simple_log_root = "results/simple_inj_logs"
+    if log_root is not None:
+        simple_log_root = log_root
+        aggregate_log_dir = os.path.join(log_root, "_summaries")
+    else:
+        simple_log_root = "results/simple_inj_logs"
+        aggregate_log_dir = "results/logs/injection"
 
     console.rule(f"[bold]Mode: function-call injection ({backend})[/bold]")
     console.log(f"Model: [bold]{model_id}[/bold]   Backend: {backend}")
     console.log(f"Per-sample logs under [bold]{simple_log_root}/[/bold]")
+    console.log(f"Aggregate summary under [bold]{aggregate_log_dir}/[/bold]")
 
     conditions = [("text", "Text"), ("image", "Image")]
     hf_tools = build_hf_tools()
@@ -589,10 +601,9 @@ def run_injection_scenario(
     console.print(table)
 
     # ---- Aggregate log ----
-    log_dir = "results/logs/injection"
-    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(aggregate_log_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_path = os.path.join(log_dir, f"{model_short}_{timestamp}.json")
+    log_path = os.path.join(aggregate_log_dir, f"{model_short}_{timestamp}.json")
 
     overall: dict = {}
     for _, cond_label in conditions:

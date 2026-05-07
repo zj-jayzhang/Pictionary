@@ -65,6 +65,17 @@ def parse_cli_args() -> argparse.Namespace:
             "definition change without redoing the rest of the matrix."
         ),
     )
+    parser.add_argument(
+        "--log-root",
+        dest="log_root",
+        default=None,
+        help=(
+            "Root directory for per-sample and aggregate logs. Defaults "
+            "to results/simple_inj_logs (per-sample) + results/logs/injection "
+            "(aggregate). When set, both go under <log-root>/ and "
+            "<log-root>/_summaries/."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -82,6 +93,7 @@ def main() -> None:
     run_injection_scenario(
         task_type_filter=args.task_type,
         template_idx_filter=args.template_idx,
+        log_root=args.log_root,
     )
 
 

@@ -8,3 +8,5 @@ simple_inj_logs/
 *.png
 !README*.png
 .claude/
+tmp/
+results/
