@@ -38,7 +38,9 @@ from injection.data import (
     grade_user_task,
 )
 from helpers.runner import (
+    audio_b64,
     console,
+    create_content_audio,
     create_content_image,
     get_active_model_id,
     image_b64,
@@ -105,9 +107,19 @@ def _extract_function_calls(response: str) -> list[str]:
 # Message builders
 # ---------------------------------------------------------------------------
 
-def _build_injection_messages(condition: str, user_task: str, full_content: str, content_img):
-    """OpenAI/OpenRouter-format messages. `image` mode puts the document
-    in an image block of the user turn; `text` mode keeps it inline.
+def _build_injection_messages(
+    condition: str,
+    user_task: str,
+    full_content: str,
+    content_img=None,
+    content_audio: bytes | None = None,
+):
+    """OpenAI/OpenRouter-format messages.
+
+    - ``text``: document inline in the user text block.
+    - ``image``: document rendered to a PNG in an image block.
+    - ``audio``: document rendered to WAV in an input_audio block.
+
     Anthropic calls reuse this shape and we translate below.
     """
     if condition == "text":
@@ -117,6 +129,8 @@ def _build_injection_messages(condition: str, user_task: str, full_content: str,
         ]
 
     if condition == "image":
+        if content_img is None:
+            raise ValueError("image condition requires a rendered image")
         return [
             {"role": "system", "content": _INJECTION_SYSTEM_PROMPT},
             {
@@ -126,6 +140,26 @@ def _build_injection_messages(condition: str, user_task: str, full_content: str,
                     {
                         "type": "image_url",
                         "image_url": {"url": image_data_url(content_img)},
+                    },
+                ],
+            },
+        ]
+
+    if condition == "audio":
+        if content_audio is None:
+            raise ValueError("audio condition requires rendered audio bytes")
+        return [
+            {"role": "system", "content": _INJECTION_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": user_task},
+                    {
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": audio_b64(content_audio),
+                            "format": "wav",
+                        },
                     },
                 ],
             },
@@ -147,20 +181,54 @@ def _embed_injection(content: str, injection: str) -> str:
 # Provider-specific callers
 # ---------------------------------------------------------------------------
 
+def _has_audio_input(messages: list) -> bool:
+    for m in messages:
+        content = m.get("content")
+        if isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "input_audio":
+                    return True
+    return False
+
+
 def _call_openai_or_openrouter(messages: list, tools: list, model_id: str) -> str:
     """openai/* routes to OpenAI direct; everything else via OpenRouter."""
     client, resolved_model = resolve_client_and_model(model_id)
-    resp = client.chat.completions.create(
+    kwargs: dict = dict(
         model=resolved_model,
         messages=messages,
         tools=tools,
         max_completion_tokens=2048,
         timeout=60,
     )
+    is_audio_model = "audio" in resolved_model.lower()
+    has_audio_in = _has_audio_input(messages)
+    if is_audio_model:
+        if has_audio_in:
+            # Audio in, text out — standard for the `audio` condition.
+            kwargs["modalities"] = ["text"]
+        else:
+            # gpt-audio-mini and friends reject calls with neither audio
+            # input nor audio output. For the `text` condition we keep the
+            # input text-only (same as text-only models) but request audio
+            # output too — and discard it — so the SAME model handles both
+            # conditions.
+            kwargs["modalities"] = ["text", "audio"]
+            kwargs["audio"] = {"voice": "alloy", "format": "wav"}
+    elif has_audio_in:
+        kwargs["modalities"] = ["text"]
+    resp = client.chat.completions.create(**kwargs)
     message = resp.choices[0].message
     parts: list[str] = []
     if message.content:
         parts.append(message.content.strip())
+    # Audio-output models (used in the text condition on gpt-audio-mini
+    # because the model requires audio in input OR output) route the
+    # answer into message.audio.transcript instead of message.content.
+    audio_out = getattr(message, "audio", None)
+    transcript = getattr(audio_out, "transcript", None) if audio_out else None
+    if transcript:
+        parts.append(transcript.strip())
     for tool_call in message.tool_calls or []:
         if tool_call.type != "function":
             continue
@@ -171,6 +239,119 @@ def _call_openai_or_openrouter(messages: list, tools: list, model_id: str) -> st
         parts.append(
             "<tool_call>"
             + json.dumps({"name": tool_call.function.name, "arguments": args})
+            + "</tool_call>"
+        )
+    return "\n".join(parts).strip()
+
+
+def _messages_to_dashscope(messages: list) -> list:
+    """Translate OpenAI-style messages to qwen-omni format.
+
+    qwen3.5-omni-plus accepts ``input_audio`` blocks but expects the
+    ``data`` field to be a ``data:audio/<fmt>;base64,…`` URI rather than
+    raw base64. Other block types pass through unchanged.
+    """
+    out: list = []
+    for m in messages:
+        new_m = dict(m)
+        content = new_m.get("content")
+        if isinstance(content, list):
+            new_parts: list = []
+            for part in content:
+                if isinstance(part, dict) and part.get("type") == "input_audio":
+                    ia = part.get("input_audio", {})
+                    fmt = ia.get("format", "wav")
+                    data = ia.get("data", "")
+                    if not data.startswith("data:"):
+                        data = f"data:audio/{fmt};base64,{data}"
+                    new_parts.append({
+                        "type": "input_audio",
+                        "input_audio": {"data": data, "format": fmt},
+                    })
+                else:
+                    new_parts.append(part)
+            new_m["content"] = new_parts
+        out.append(new_m)
+    return out
+
+
+def _call_dashscope(messages: list, tools: list, model_id: str) -> str:
+    """DashScope (Alibaba) caller for `dashscope/qwen3.5-omni-plus` etc.
+
+    qwen3.5-omni-plus requires ``stream=True`` and
+    ``modalities=["text", "audio"]`` with an ``audio`` voice spec — even
+    when we only want text out. We collect text content + tool call deltas
+    across the stream and discard the audio bytes.
+
+    Retries on 429 (TPM/RPM bucket); does not retry on hard account
+    quota — those will surface to the caller as an exception.
+    """
+    import time as _time
+
+    client, resolved_model = resolve_client_and_model(model_id)
+    kwargs: dict = dict(
+        model=resolved_model,
+        messages=_messages_to_dashscope(messages),
+        tools=tools if tools else None,
+        modalities=["text", "audio"],
+        audio={"voice": "Tina", "format": "wav"},
+        stream=True,
+        stream_options={"include_usage": True},
+        timeout=180,
+    )
+
+    stream = None
+    last_exc: Exception | None = None
+    for attempt in range(5):
+        try:
+            stream = client.chat.completions.create(**kwargs)
+            break
+        except Exception as exc:  # noqa: BLE001
+            msg = str(exc)
+            # Retry on 429 / rate-limit / quota — back off and try again.
+            if "429" in msg or "rate" in msg.lower() or "quota" in msg.lower():
+                last_exc = exc
+                _time.sleep(2 ** attempt + 1)
+                continue
+            raise
+    if stream is None:
+        raise last_exc if last_exc else RuntimeError("dashscope create failed")
+
+    content_parts: list[str] = []
+    tool_call_acc: dict[int, dict] = {}
+
+    for chunk in stream:
+        if not chunk.choices:
+            continue
+        delta = chunk.choices[0].delta
+        text = getattr(delta, "content", None)
+        if text:
+            content_parts.append(text)
+        for tc in (getattr(delta, "tool_calls", None) or []):
+            idx = getattr(tc, "index", 0) or 0
+            entry = tool_call_acc.setdefault(idx, {"name": "", "arguments": ""})
+            fn = getattr(tc, "function", None)
+            if fn is not None:
+                if getattr(fn, "name", None):
+                    entry["name"] = fn.name
+                if getattr(fn, "arguments", None):
+                    entry["arguments"] += fn.arguments
+
+    parts: list[str] = []
+    full_text = "".join(content_parts).strip()
+    if full_text:
+        parts.append(full_text)
+    for idx in sorted(tool_call_acc):
+        entry = tool_call_acc[idx]
+        if not entry["name"]:
+            continue
+        try:
+            args = json.loads(entry["arguments"] or "{}")
+        except json.JSONDecodeError:
+            args = entry["arguments"] or {}
+        parts.append(
+            "<tool_call>"
+            + json.dumps({"name": entry["name"], "arguments": args})
             + "</tool_call>"
         )
     return "\n".join(parts).strip()
@@ -227,6 +408,10 @@ def _messages_to_anthropic(messages: list) -> tuple[str | None, list]:
                             "data": data_url.split(",", 1)[1],
                         },
                     })
+                elif ptype == "input_audio":
+                    raise ValueError(
+                        "Anthropic backend does not support audio input."
+                    )
         out.append({"role": role, "content": anth_content})
     return system, out
 
@@ -313,6 +498,15 @@ def _scrub_messages_for_log(messages: list) -> list:
                         "type": "image_url",
                         "image_url": {
                             "url": "<rendered image data URL omitted from log>"
+                        },
+                    })
+                elif ptype == "input_audio":
+                    audio_meta = part.get("input_audio", {})
+                    parts.append({
+                        "type": "input_audio",
+                        "input_audio": {
+                            "format": audio_meta.get("format"),
+                            "data": "<wav audio data omitted from log>",
                         },
                     })
                 elif ptype == "text":
@@ -415,10 +609,14 @@ def _write_sample_log(
 # Scenario entry point
 # ---------------------------------------------------------------------------
 
+_CONDITION_LABELS = {"text": "Text", "image": "Image", "audio": "Audio"}
+
+
 def run_injection_scenario(
     task_type_filter: str | None = None,
     template_idx_filter: int | None = None,
     log_root: str | None = None,
+    conditions: list[str] | None = None,
 ) -> None:
     """Run the full (user_task × injection × template × condition) matrix.
 
@@ -437,7 +635,12 @@ def run_injection_scenario(
     ``results/logs/injection/`` (aggregate) is used.
     """
     model_id = get_active_model_id()
-    backend = "Anthropic" if model_id.startswith("anthropic/") else "OpenAI/OpenRouter"
+    if model_id.startswith("anthropic/"):
+        backend = "Anthropic"
+    elif model_id.startswith("dashscope/"):
+        backend = "DashScope"
+    else:
+        backend = "OpenAI/OpenRouter"
     model_short = model_id.replace("/", "_")
     if log_root is not None:
         simple_log_root = log_root
@@ -451,7 +654,24 @@ def run_injection_scenario(
     console.log(f"Per-sample logs under [bold]{simple_log_root}/[/bold]")
     console.log(f"Aggregate summary under [bold]{aggregate_log_dir}/[/bold]")
 
-    conditions = [("text", "Text"), ("image", "Image")]
+    if conditions is None:
+        conditions = ["text", "image"]
+    for key in conditions:
+        if key not in _CONDITION_LABELS:
+            raise ValueError(
+                f"Unknown condition {key!r}. Valid: {sorted(_CONDITION_LABELS)}"
+            )
+    conditions_indexed: list[tuple[str, str]] = [
+        (key, _CONDITION_LABELS[key]) for key in conditions
+    ]
+    needs_image = "image" in conditions
+    needs_audio = "audio" in conditions
+    if needs_audio and backend == "Anthropic":
+        raise ValueError(
+            "Audio condition is not supported with the Anthropic backend "
+            "(no audio input in Anthropic Messages API)."
+        )
+    console.log(f"Conditions: [bold]{', '.join(label for _, label in conditions_indexed)}[/bold]")
     hf_tools = build_hf_tools()
 
     templates_indexed = [
@@ -488,7 +708,7 @@ def run_injection_scenario(
 
     # results[cond_label] -> {"asr": [...], "ut": [...]}
     results: dict[str, dict[str, list[bool | None]]] = {
-        label: {"asr": [], "ut": []} for _, label in conditions
+        label: {"asr": [], "ut": []} for _, label in conditions_indexed
     }
 
     for user_task_idx, (task_type, user_task, content) in user_tasks_indexed:
@@ -501,10 +721,17 @@ def run_injection_scenario(
                     prefilled_answers=_T2_PREFILLED_ANSWERS[task_type],
                 )
                 full_content = _embed_injection(content, wrapped_injection)
-                content_img = create_content_image(full_content)
-                content_img.save("results/last_render.png")
+                if needs_image:
+                    content_img = create_content_image(full_content)
+                    content_img.save("results/last_render.png")
+                else:
+                    content_img = None
+                if needs_audio:
+                    content_audio = create_content_audio(full_content)
+                else:
+                    content_audio = None
 
-                for cond_key, cond_label in conditions:
+                for cond_key, cond_label in conditions_indexed:
                     tag = (
                         f"[{task_type}][t{tmpl_idx}:{inj_idx}:{target_fn}]"
                         f"[{cond_label}]"
@@ -520,10 +747,16 @@ def run_injection_scenario(
 
                     try:
                         msgs = _build_injection_messages(
-                            cond_key, user_task, full_content, content_img
+                            cond_key,
+                            user_task,
+                            full_content,
+                            content_img=content_img,
+                            content_audio=content_audio,
                         )
                         if backend == "Anthropic":
                             response = _call_anthropic(msgs, hf_tools, model_id)
+                        elif backend == "DashScope":
+                            response = _call_dashscope(msgs, hf_tools, model_id)
                         else:
                             response = _call_openai_or_openrouter(msgs, hf_tools, model_id)
 
@@ -593,7 +826,7 @@ def run_injection_scenario(
     table.add_column("ASR (InjectionTaskSuccess)", justify="right")
     table.add_column("UT (UserTaskSuccess)", justify="right")
 
-    for _, cond_label in conditions:
+    for _, cond_label in conditions_indexed:
         asr = [v for v in results[cond_label]["asr"] if v is not None]
         ut = [v for v in results[cond_label]["ut"] if v is not None]
         if asr:
@@ -616,7 +849,7 @@ def run_injection_scenario(
     log_path = os.path.join(aggregate_log_dir, f"{model_short}_{timestamp}.json")
 
     overall: dict = {}
-    for _, cond_label in conditions:
+    for _, cond_label in conditions_indexed:
         asr = [v for v in results[cond_label]["asr"] if v is not None]
         ut = [v for v in results[cond_label]["ut"] if v is not None]
         overall[cond_label] = {
@@ -637,7 +870,7 @@ def run_injection_scenario(
                 "n_attacks": n_attacks,
                 "n_templates": n_templates,
                 "samples_per_condition": total,
-                "conditions": [label for _, label in conditions],
+                "conditions": [label for _, label in conditions_indexed],
                 "override_templates": [t for _, t in templates_indexed],
                 "overall": overall,
                 "raw_results": {

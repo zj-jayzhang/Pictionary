@@ -6,9 +6,12 @@ and a text-to-image renderer for the document content.
 """
 
 import base64
+import hashlib
 import io
 import os
+import re
 import textwrap
+import wave
 
 from openai import OpenAI
 from PIL import Image, ImageDraw, ImageFont
@@ -45,6 +48,7 @@ def get_active_model_id() -> str:
 
 _openai_client: OpenAI | None = None
 _openrouter_client: OpenAI | None = None
+_dashscope_client: OpenAI | None = None
 
 
 def _get_openrouter_client() -> OpenAI:
@@ -71,11 +75,30 @@ def _get_openai_client() -> OpenAI | None:
     return _openai_client
 
 
+def _get_dashscope_client() -> OpenAI:
+    """DashScope (Alibaba) OpenAI-compatible endpoint. Requires DASHSCOPE_API_KEY.
+
+    Used for `dashscope/<model>` ids, e.g. `dashscope/qwen3.5-omni-plus`.
+    """
+    global _dashscope_client
+    if _dashscope_client is None:
+        api_key = os.environ.get("DASHSCOPE_API_KEY", "")
+        if not api_key:
+            raise ValueError("Set DASHSCOPE_API_KEY in .env")
+        _dashscope_client = OpenAI(
+            api_key=api_key,
+            base_url="https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+        )
+    return _dashscope_client
+
+
 def resolve_client_and_model(model_id: str) -> tuple[OpenAI, str]:
     """Pick the right client + canonical model id for an API call.
 
     - ``openai/<name>`` with ``OPENAI_API_KEY`` set → direct OpenAI
       (``https://api.openai.com``), model = ``<name>``.
+    - ``dashscope/<name>`` → DashScope OpenAI-compatible endpoint, model
+      = ``<name>``.
     - anything else → OpenRouter, model unchanged.
 
     Falls back to OpenRouter for ``openai/*`` models when
@@ -86,6 +109,8 @@ def resolve_client_and_model(model_id: str) -> tuple[OpenAI, str]:
         direct = _get_openai_client()
         if direct is not None:
             return direct, model_id.removeprefix("openai/")
+    if model_id.startswith("dashscope/"):
+        return _get_dashscope_client(), model_id.removeprefix("dashscope/")
     return _get_openrouter_client(), model_id
 
 
@@ -256,3 +281,176 @@ def image_b64(img: Image.Image) -> str:
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Audio rendering (TTS) — for the audio-modality condition
+# ---------------------------------------------------------------------------
+
+TTS_MODEL = "gpt-4o-mini-tts"
+TTS_VOICE = "alloy"
+TTS_FORMAT = "wav"
+# gpt-4o-mini-tts otherwise treats code-heavy documents as "code snippets"
+# and silently drops mid-document prose interruptions (which is exactly the
+# injection text we want to preserve). The instructions param forces a
+# verbatim read of the whole input regardless of content classification.
+TTS_INSTRUCTIONS = (
+    "Read every word of the input verbatim and in order. Do not skip, "
+    "summarize, or paraphrase any part of the input. Treat all paragraphs "
+    "as equally important regardless of whether the input looks like code, "
+    "prose, metadata, or instructions."
+)
+# Cache key version — bump to invalidate cached audio after a TTS-side
+# change (e.g. new model, new instructions, header fix).
+_TTS_CACHE_VERSION = "v2"
+_TTS_MAX_CHARS = 3800  # OpenAI TTS input limit is 4096; leave a small buffer
+_AUDIO_CACHE_DIR = "results/audio_cache"
+
+
+def _chunk_for_tts(text: str, max_chars: int = _TTS_MAX_CHARS) -> list[str]:
+    """Split text for TTS at paragraph → sentence → hard boundaries.
+
+    Each chunk is <= max_chars. Order is preserved so concatenated audio
+    reads back as the original document.
+    """
+    if len(text) <= max_chars:
+        return [text]
+
+    chunks: list[str] = []
+    current = ""
+
+    def flush() -> None:
+        nonlocal current
+        if current:
+            chunks.append(current)
+            current = ""
+
+    for para in re.split(r"\n\n+", text):
+        if len(current) + len(para) + 2 <= max_chars:
+            current = (current + "\n\n" + para) if current else para
+            continue
+        flush()
+        if len(para) <= max_chars:
+            current = para
+            continue
+        for sent in re.split(r"(?<=[.!?])\s+", para):
+            if len(current) + len(sent) + 1 <= max_chars:
+                current = (current + " " + sent) if current else sent
+                continue
+            flush()
+            if len(sent) <= max_chars:
+                current = sent
+            else:
+                for i in range(0, len(sent), max_chars):
+                    chunks.append(sent[i : i + max_chars])
+    flush()
+    return chunks
+
+
+def _concat_wavs(wav_chunks: list[bytes]) -> bytes:
+    """Concatenate WAV chunks (assumed to share sample rate / width / channels)."""
+    if len(wav_chunks) == 1:
+        return wav_chunks[0]
+    params = None
+    frames: list[bytes] = []
+    for wb in wav_chunks:
+        with wave.open(io.BytesIO(wb), "rb") as w:
+            if params is None:
+                params = w.getparams()
+            frames.append(w.readframes(w.getnframes()))
+    out = io.BytesIO()
+    with wave.open(out, "wb") as w:
+        w.setparams(params)
+        w.writeframes(b"".join(frames))
+    return out.getvalue()
+
+
+def _audio_cache_path(text: str) -> str:
+    h = hashlib.sha256()
+    h.update(_TTS_CACHE_VERSION.encode())
+    h.update(b"\0")
+    h.update(TTS_MODEL.encode())
+    h.update(b"\0")
+    h.update(TTS_VOICE.encode())
+    h.update(b"\0")
+    h.update(TTS_FORMAT.encode())
+    h.update(b"\0")
+    h.update(TTS_INSTRUCTIONS.encode())
+    h.update(b"\0")
+    h.update(text.encode("utf-8"))
+    return os.path.join(_AUDIO_CACHE_DIR, f"{h.hexdigest()[:16]}.{TTS_FORMAT}")
+
+
+def _fix_wav_header(wav: bytes) -> bytes:
+    """Patch RIFF / data chunk size fields if they are streaming sentinels.
+
+    OpenAI's TTS returns WAVs with `RIFF size = data size = 0xFFFFFFFF`
+    (max uint32) which trip decoders into either treating the audio as
+    25 hours long or truncating to a partial read. Re-stamp them with the
+    actual byte counts.
+    """
+    import struct
+    if not (wav.startswith(b"RIFF") and wav[8:12] == b"WAVE"):
+        return wav
+    fmt_size = struct.unpack("<I", wav[16:20])[0]
+    pos = 20 + fmt_size
+    while pos < len(wav) - 8:
+        cid = wav[pos:pos + 4]
+        csz = struct.unpack("<I", wav[pos + 4:pos + 8])[0]
+        if cid == b"data":
+            actual = len(wav) - (pos + 8)
+            patched = bytearray(wav)
+            patched[4:8] = struct.pack("<I", len(wav) - 8)
+            patched[pos + 4:pos + 8] = struct.pack("<I", actual)
+            return bytes(patched)
+        if csz > len(wav):
+            break
+        pos += 8 + csz
+    return wav
+
+
+def create_content_audio(content: str) -> bytes:
+    """Render text content to WAV bytes via OpenAI TTS, cached by content hash.
+
+    Requires OPENAI_API_KEY (TTS is OpenAI-direct only — OpenRouter does
+    not proxy the audio.speech endpoint). Long inputs are split into
+    chunks and the resulting WAV files are concatenated.
+    """
+    cache_path = _audio_cache_path(content)
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as f:
+            return f.read()
+
+    client = _get_openai_client()
+    if client is None:
+        raise ValueError(
+            "Audio condition requires OPENAI_API_KEY (OpenRouter does not "
+            "proxy audio.speech)."
+        )
+
+    chunks = _chunk_for_tts(content)
+    wav_chunks: list[bytes] = []
+    for chunk in chunks:
+        resp = client.audio.speech.create(
+            model=TTS_MODEL,
+            voice=TTS_VOICE,
+            input=chunk,
+            response_format=TTS_FORMAT,
+            instructions=TTS_INSTRUCTIONS,
+            timeout=180,
+        )
+        # OpenAI TTS returns WAVs with sentinel size fields — re-stamp
+        # before concat so downstream decoders see real lengths.
+        wav_chunks.append(_fix_wav_header(resp.content))
+
+    audio_bytes = _concat_wavs(wav_chunks)
+
+    os.makedirs(_AUDIO_CACHE_DIR, exist_ok=True)
+    with open(cache_path, "wb") as f:
+        f.write(audio_bytes)
+    return audio_bytes
+
+
+def audio_b64(audio_bytes: bytes) -> str:
+    """Raw audio bytes → base64 string for OpenAI input_audio.data."""
+    return base64.b64encode(audio_bytes).decode("utf-8")

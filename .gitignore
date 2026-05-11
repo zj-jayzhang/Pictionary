@@ -9,4 +9,6 @@ simple_inj_logs/
 !README*.png
 .claude/
 tmp/
-results/
+results/*
+!results/exp_notes/
+

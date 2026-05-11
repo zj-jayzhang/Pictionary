@@ -76,6 +76,17 @@ def parse_cli_args() -> argparse.Namespace:
             "<log-root>/_summaries/."
         ),
     )
+    parser.add_argument(
+        "--conditions",
+        dest="conditions",
+        default="text,image",
+        help=(
+            "Comma-separated list of conditions to run. Valid values: "
+            "text, image, audio. Default: 'text,image'. For the audio "
+            "modality-gap test pass 'text,audio' (requires an "
+            "audio-capable model like openai/gpt-audio-mini)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -90,10 +101,12 @@ def main() -> None:
     console.log(f"Using model: [bold]{get_active_model_id()}[/bold]")
 
     from injection.runner import run_injection_scenario
+    conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
     run_injection_scenario(
         task_type_filter=args.task_type,
         template_idx_filter=args.template_idx,
         log_root=args.log_root,
+        conditions=conditions,
     )
 
 
