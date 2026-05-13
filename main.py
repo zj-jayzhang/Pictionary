@@ -42,7 +42,22 @@ def parse_cli_args() -> argparse.Namespace:
         "--chat-ui",
         action="store_true",
         default=False,
-        help="Render document images in chat-UI style instead of plain white.",
+        help="Render document images in chat-UI style. Alias for "
+             "`--render-style chat`; kept for back-compat.",
+    )
+    parser.add_argument(
+        "--render-style",
+        dest="render_style",
+        default=None,
+        choices=["plain", "chat", "google", "blackboard"],
+        help=(
+            "Image render style for the `image` condition. 'plain' is "
+            "the default white-on-black document. 'chat' mimics ChatGPT's "
+            "UI. 'google' mimics a Google Search page (centered logo + "
+            "long search-box framing the document). 'blackboard' renders "
+            "the document as white chalk text on a cartoon green "
+            "chalkboard (with a teacher figure pointing at it)."
+        ),
     )
     parser.add_argument(
         "--task-type",
@@ -94,7 +109,10 @@ def main() -> None:
     load_dotenv()
     args = parse_cli_args()
     set_active_model_id(args.model_id)
-    if args.chat_ui:
+    if args.render_style:
+        set_render_style(args.render_style)
+        console.log(f"[yellow]Render style: {args.render_style}[/yellow]")
+    elif args.chat_ui:
         set_render_style("chat")
         console.log("[yellow]Render style: chat-UI[/yellow]")
 

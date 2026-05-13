@@ -134,9 +134,10 @@ _render_style: str = "plain"
 
 
 def set_render_style(style: str) -> None:
-    """Set the active render style: 'plain' (white bg) or 'chat' (chat-UI)."""
+    """Set the active render style: 'plain', 'chat' (chat-UI), 'google'
+    (Google Search-style), or 'blackboard' (cartoon teacher + chalkboard)."""
     global _render_style
-    if style not in ("plain", "chat"):
+    if style not in ("plain", "chat", "google", "blackboard"):
         raise ValueError(f"Unknown render style: {style!r}")
     _render_style = style
 
@@ -145,6 +146,10 @@ def create_content_image(content: str) -> Image.Image:
     """Render text content using the active render style."""
     if _render_style == "chat":
         return _create_chat_content_image(content)
+    if _render_style == "google":
+        return _create_google_content_image(content)
+    if _render_style == "blackboard":
+        return _create_blackboard_content_image(content)
     return _create_plain_content_image(content)
 
 
@@ -266,6 +271,209 @@ def _create_chat_content_image(content: str) -> Image.Image:
     draw.rectangle([(sx - 2, cy), (sx + 2, cy + 6)], fill=ACCENT)
 
     return img
+
+
+def _create_google_content_image(content: str) -> Image.Image:
+    """Google Search-style: centered colored Google logo + a long rounded
+    search-box containing the document. Magnifying-glass icon on the left,
+    X + 'AI mode' label on the right. Pushes the model further toward
+    treating the content as a *third-party page* rather than as commands
+    addressed to it."""
+    W = 900
+    BG = (255, 255, 255)
+    BORDER = (220, 220, 220)
+    SHADOW = (235, 235, 235)
+    TEXT_COLOR = (60, 60, 60)
+    ICON_GRAY = (130, 130, 130)
+    BLUE = (66, 133, 244)
+    RED = (234, 67, 53)
+    YELLOW = (251, 188, 4)
+    GREEN = (52, 168, 83)
+
+    FONT_LOGO = _load_font(80, bold=True)
+    FONT_BODY = _load_font(18)
+    FONT_AI = _load_font(14)
+
+    LOGO_TOP = 40
+    LOGO_H = 90
+    BOX_TOP = LOGO_TOP + LOGO_H + 30
+    BOX_MARGIN_X = 30
+    BOX_W = W - 2 * BOX_MARGIN_X
+    BOX_RADIUS = 28
+    TEXT_PAD_LEFT = 60   # leaves room for the magnifying-glass icon
+    TEXT_PAD_RIGHT = 130  # leaves room for X + "AI mode"
+    TEXT_PAD_TOP = 52
+    TEXT_PAD_BOTTOM = 30
+    LINE_H = 26
+
+    text_w_chars = 70  # wraps a bit narrower than plain to make it search-box-shaped
+    lines: list[str] = []
+    for para in content.splitlines() or [""]:
+        lines.extend(textwrap.wrap(para, width=text_w_chars) or [""])
+
+    box_h = TEXT_PAD_TOP + LINE_H * len(lines) + TEXT_PAD_BOTTOM
+    img_h = BOX_TOP + box_h + 40
+
+    img = Image.new("RGB", (W, max(img_h, 300)), BG)
+    draw = ImageDraw.Draw(img)
+
+    # Google logo, centered
+    letters = [("G", BLUE), ("o", RED), ("o", YELLOW),
+               ("g", BLUE), ("l", GREEN), ("e", RED)]
+    widths = [draw.textlength(c, font=FONT_LOGO) for c, _ in letters]
+    total_w = sum(widths)
+    x = (W - total_w) // 2
+    for (char, color), w in zip(letters, widths):
+        draw.text((x, LOGO_TOP), char, fill=color, font=FONT_LOGO)
+        x += w
+
+    # Search-box bounds
+    bx0, by0 = BOX_MARGIN_X, BOX_TOP
+    bx1, by1 = BOX_MARGIN_X + BOX_W, BOX_TOP + box_h
+
+    # Shadow + box
+    draw.rounded_rectangle(
+        [(bx0 + 2, by0 + 3), (bx1 + 2, by1 + 3)],
+        radius=BOX_RADIUS, fill=SHADOW,
+    )
+    draw.rounded_rectangle(
+        [(bx0, by0), (bx1, by1)],
+        radius=BOX_RADIUS, outline=BORDER, width=1, fill=BG,
+    )
+
+    # Magnifying-glass icon (top-left of search box)
+    mg_cx, mg_cy = bx0 + 28, by0 + 30
+    draw.ellipse([(mg_cx - 10, mg_cy - 10), (mg_cx + 6, mg_cy + 6)],
+                 outline=ICON_GRAY, width=2)
+    draw.line([(mg_cx + 5, mg_cy + 5), (mg_cx + 13, mg_cy + 13)],
+              fill=ICON_GRAY, width=2)
+
+    # X close icon (top-right, before AI mode)
+    x_cx, x_cy = bx1 - 90, by0 + 30
+    draw.line([(x_cx - 6, x_cy - 6), (x_cx + 6, x_cy + 6)],
+              fill=ICON_GRAY, width=2)
+    draw.line([(x_cx + 6, x_cy - 6), (x_cx - 6, x_cy + 6)],
+              fill=ICON_GRAY, width=2)
+
+    # AI mode label with sparkle (top-right)
+    sx, sy = bx1 - 62, by0 + 30
+    # 4-pointed sparkle
+    draw.polygon(
+        [(sx, sy - 7), (sx + 2, sy - 2), (sx + 7, sy),
+         (sx + 2, sy + 2), (sx, sy + 7), (sx - 2, sy + 2),
+         (sx - 7, sy), (sx - 2, sy - 2)],
+        fill=BLUE,
+    )
+    draw.text((sx + 10, sy - 8), "AI mode", fill=BLUE, font=FONT_AI)
+
+    # Document text inside the box
+    y = by0 + TEXT_PAD_TOP
+    for line in lines:
+        draw.text((bx0 + TEXT_PAD_LEFT, y), line,
+                  fill=TEXT_COLOR, font=FONT_BODY)
+        y += LINE_H
+
+    return img
+
+
+def _create_blackboard_content_image(content: str) -> Image.Image:
+    """Blackboard style: render text as white chalk on a cartoon-style
+    green chalkboard, with a small teacher figure overlaid in a corner.
+
+    Strategy: build the wooden frame + chalkboard procedurally (so the
+    board can be sized to fit the document at a comfortable font), then
+    paste a scaled-down teacher cropped from `blackboard.png` on the
+    right side. Avoids the "split-teacher" artifact of the earlier
+    image-stretching approach.
+    """
+    import os
+
+    W = 900
+    FONT_SIZE = 18
+    LINE_H = FONT_SIZE + 6
+    PAD = 20
+    WOOD_THICK = 22
+    OUTER_MARGIN = 28
+
+    # Sample palette from blackboard.png if available, else fall back.
+    bg_path = "blackboard.png"
+    if os.path.exists(bg_path):
+        bg = Image.open(bg_path).convert("RGB").resize((900, 540), Image.LANCZOS)
+        BOARD_COLOR = bg.getpixel((300, 200))   # dark green
+        WOOD_COLOR = bg.getpixel((35, 200))     # brown frame
+        # Wall stripe colors sampled top of backdrop.
+        WALL_A = bg.getpixel((10, 5))
+        WALL_B = bg.getpixel((40, 5))
+    else:
+        bg = None
+        BOARD_COLOR = (45, 80, 75)
+        WOOD_COLOR = (180, 110, 50)
+        WALL_A = (110, 140, 135)
+        WALL_B = (130, 160, 155)
+
+    CHALK = (242, 240, 228)
+
+    # Wrap text at a fixed comfortable font size, then size the canvas
+    # vertically to fit. Text area available width is the inner board
+    # minus padding on both sides.
+    inner_w = W - 2 * OUTER_MARGIN - 2 * WOOD_THICK - 2 * PAD
+    font = _load_font(FONT_SIZE)
+    # Use average char width over a representative sample (mix of upper, lower,
+    # digits, punctuation), not M-width which over-estimates.
+    sample = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJ0123456789 ,.()_"
+    sample_w = font.getbbox(sample)[2] - font.getbbox(sample)[0]
+    avg_ch_w = max(1.0, sample_w / len(sample))
+    chars_per_line = max(10, int(inner_w / avg_ch_w))
+
+    lines: list[str] = []
+    for para in content.splitlines() or [""]:
+        lines.extend(textwrap.wrap(para, width=chars_per_line) or [""])
+
+    text_h = LINE_H * len(lines)
+    H = OUTER_MARGIN * 2 + WOOD_THICK * 2 + PAD * 2 + text_h
+
+    canvas = Image.new("RGB", (W, H), WALL_A)
+    draw = ImageDraw.Draw(canvas)
+
+    # Stripey wall background (vertical stripes, alternating two colors).
+    STRIPE_W = 28
+    for x in range(0, W, STRIPE_W * 2):
+        draw.rectangle([(x, 0), (x + STRIPE_W, H)], fill=WALL_B)
+
+    # Wooden frame
+    fx0, fy0 = OUTER_MARGIN, OUTER_MARGIN
+    fx1, fy1 = W - OUTER_MARGIN, H - OUTER_MARGIN
+    draw.rectangle([(fx0, fy0), (fx1, fy1)], fill=WOOD_COLOR)
+
+    # Inner chalkboard
+    bx0 = fx0 + WOOD_THICK
+    by0 = fy0 + WOOD_THICK
+    bx1 = fx1 - WOOD_THICK
+    by1 = fy1 - WOOD_THICK
+    draw.rectangle([(bx0, by0), (bx1, by1)], fill=BOARD_COLOR)
+
+    # Render chalk text inside the board.
+    y = by0 + PAD
+    for line in lines:
+        draw.text((bx0 + PAD, y), line, fill=CHALK, font=font)
+        y += LINE_H
+
+    # Paste a scaled-down teacher cropped from the original image in the
+    # bottom-right corner, overlapping the wooden frame. The crop keeps
+    # the original striped-wall background around the teacher; since our
+    # canvas wall uses the same colors, the seam blends reasonably well.
+    if bg is not None:
+        teacher_crop = bg.crop((615, 175, 880, 540))   # ~265×365
+        TARGET_H = 220
+        target_w = int(teacher_crop.size[0] * TARGET_H / teacher_crop.size[1])
+        teacher_crop = teacher_crop.resize((target_w, TARGET_H), Image.LANCZOS)
+        # Place at far right, vertically centered around frame bottom.
+        canvas.paste(
+            teacher_crop,
+            (W - target_w - 10, H - TARGET_H - 10),
+        )
+
+    return canvas
 
 
 def image_data_url(img: Image.Image) -> str:
