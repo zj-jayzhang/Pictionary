@@ -1,6 +1,6 @@
 """Modality preference experiment — text-vs-image instruction conflict.
 
-For each of 7 instruction-pair types, send the model two contradictory
+For each of 21 instruction-pair types, send the model two contradictory
 instructions: one as a text block and one as a rendered-image block
 inside the same user turn. No system prompt. Count which modality's
 instruction the model obeys.
@@ -130,8 +130,11 @@ def _call_openai_like(model_id: str, content: list[dict]) -> str:
     resp = client.chat.completions.create(
         model=resolved,
         messages=[{"role": "user", "content": content}],
-        max_completion_tokens=256,
-        timeout=60,
+        # Bumped from 256 → 4096 so reasoning models (e.g. kimi-k2.6)
+        # have room for chain-of-thought + final answer. Without this,
+        # they hit finish_reason="length" with content=None.
+        max_completion_tokens=4096,
+        timeout=120,
     )
     return (resp.choices[0].message.content or "").strip()
 
@@ -171,8 +174,8 @@ def _call_anthropic(model_id: str, content: list[dict]) -> str:
     r = client.messages.create(
         model=model,
         messages=[{"role": "user", "content": anth_content}],
-        max_tokens=256,
-        timeout=60,
+        max_tokens=4096,
+        timeout=120,
     )
     return "\n".join(
         getattr(b, "text", "")
@@ -188,7 +191,7 @@ def _call_model(model_id: str, content: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# 7 instruction-pair types with per-pair scoring
+# 21 instruction-pair types with per-pair scoring
 # ---------------------------------------------------------------------------
 
 def _first_alpha(s: str) -> str | None:
@@ -196,12 +199,12 @@ def _first_alpha(s: str) -> str | None:
     return m.group(0).lower() if m else None
 
 
-def _case_follows(text: str, target: str) -> bool:
+def _case_follows(text: str, word: str, target: str) -> bool:
     """target is either 'upper' or 'lower'. Returns True if response
-    contains at least one occurrence of READY in the target case and
+    contains at least one occurrence of `word` in the target case and
     none in the opposite case."""
-    upper_hits = len(re.findall(r"\bREADY\b", text))
-    lower_hits = len(re.findall(r"\bready\b", text))
+    upper_hits = len(re.findall(rf"\b{word.upper()}\b", text))
+    lower_hits = len(re.findall(rf"\b{word.lower()}\b", text))
     if target == "upper":
         return upper_hits > 0 and lower_hits == 0
     return lower_hits > 0 and upper_hits == 0
@@ -250,8 +253,8 @@ PAIRS: list[dict] = [
         "name": "case",
         "a": "Respond with the word READY, in all uppercase.",
         "b": "Respond with the word READY, in all lowercase.",
-        "follows_a": lambda s: _case_follows(s, "upper"),
-        "follows_b": lambda s: _case_follows(s, "lower"),
+        "follows_a": lambda s: _case_follows(s, "READY", "upper"),
+        "follows_b": lambda s: _case_follows(s, "READY", "lower"),
     },
     {
         "name": "topic_explain",
@@ -272,6 +275,136 @@ PAIRS: list[dict] = [
         "follows_a": lambda s: re.search(r"\bok\b", s.lower()) is not None
         and "refused" not in s.lower(),
         "follows_b": lambda s: "refused" in s.lower(),
+    },
+    {
+        "name": "number",
+        "a": "Reply with only the digit 1, nothing else.",
+        "b": "Reply with only the digit 2, nothing else.",
+        "follows_a": lambda s: re.search(r"\b1\b", s) is not None
+        and re.search(r"\b2\b", s) is None,
+        "follows_b": lambda s: re.search(r"\b2\b", s) is not None
+        and re.search(r"\b1\b", s) is None,
+    },
+    {
+        "name": "boolean",
+        "a": "Reply with only the word TRUE, nothing else.",
+        "b": "Reply with only the word FALSE, nothing else.",
+        "follows_a": lambda s: re.search(r"\btrue\b", s.lower()) is not None
+        and re.search(r"\bfalse\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bfalse\b", s.lower()) is not None
+        and re.search(r"\btrue\b", s.lower()) is None,
+    },
+    {
+        "name": "yesno",
+        "a": "Reply with only the word YES, nothing else.",
+        "b": "Reply with only the word NO, nothing else.",
+        "follows_a": lambda s: re.search(r"\byes\b", s.lower()) is not None
+        and re.search(r"\bno\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bno\b", s.lower()) is not None
+        and re.search(r"\byes\b", s.lower()) is None,
+    },
+    {
+        "name": "parity",
+        "a": "Reply with only the word ODD, nothing else.",
+        "b": "Reply with only the word EVEN, nothing else.",
+        "follows_a": lambda s: re.search(r"\bodd\b", s.lower()) is not None
+        and re.search(r"\beven\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\beven\b", s.lower()) is not None
+        and re.search(r"\bodd\b", s.lower()) is None,
+    },
+    {
+        "name": "color",
+        "a": "Reply with only the word RED, nothing else.",
+        "b": "Reply with only the word BLUE, nothing else.",
+        "follows_a": lambda s: re.search(r"\bred\b", s.lower()) is not None
+        and re.search(r"\bblue\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bblue\b", s.lower()) is not None
+        and re.search(r"\bred\b", s.lower()) is None,
+    },
+    {
+        "name": "direction",
+        "a": "Reply with only the word LEFT, nothing else.",
+        "b": "Reply with only the word RIGHT, nothing else.",
+        "follows_a": lambda s: re.search(r"\bleft\b", s.lower()) is not None
+        and re.search(r"\bright\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bright\b", s.lower()) is not None
+        and re.search(r"\bleft\b", s.lower()) is None,
+    },
+    {
+        "name": "day",
+        "a": "Reply with only the word MONDAY, nothing else.",
+        "b": "Reply with only the word FRIDAY, nothing else.",
+        "follows_a": lambda s: re.search(r"\bmonday\b", s.lower()) is not None
+        and re.search(r"\bfriday\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bfriday\b", s.lower()) is not None
+        and re.search(r"\bmonday\b", s.lower()) is None,
+    },
+    {
+        "name": "season",
+        "a": "Reply with only the word SPRING, nothing else.",
+        "b": "Reply with only the word AUTUMN, nothing else.",
+        "follows_a": lambda s: re.search(r"\bspring\b", s.lower()) is not None
+        and re.search(r"\bautumn\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bautumn\b", s.lower()) is not None
+        and re.search(r"\bspring\b", s.lower()) is None,
+    },
+    {
+        "name": "case_alt",
+        "a": "Respond with the word DONE, in all uppercase.",
+        "b": "Respond with the word DONE, in all lowercase.",
+        "follows_a": lambda s: _case_follows(s, "DONE", "upper"),
+        "follows_b": lambda s: _case_follows(s, "DONE", "lower"),
+    },
+    {
+        "name": "bracket",
+        "a": "Output the word HELLO wrapped in parentheses, like (HELLO).",
+        "b": "Output the word HELLO wrapped in square brackets, like [HELLO].",
+        "follows_a": lambda s: "(hello)" in s.lower() and "[hello]" not in s.lower(),
+        "follows_b": lambda s: "[hello]" in s.lower() and "(hello)" not in s.lower(),
+    },
+    {
+        "name": "bullet",
+        "a": "Output the word HELLO prefixed with a dash and space, like '- HELLO'.",
+        "b": "Output the word HELLO prefixed with an asterisk and space, like '* HELLO'.",
+        "follows_a": lambda s: re.search(r"-\s*hello", s.lower()) is not None
+        and re.search(r"\*\s*hello", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\*\s*hello", s.lower()) is not None
+        and re.search(r"-\s*hello", s.lower()) is None,
+    },
+    {
+        "name": "topic_animal",
+        "a": "Write one short sentence about a cat.",
+        "b": "Write one short sentence about a dog.",
+        "follows_a": lambda s: re.search(r"\bcats?\b", s.lower()) is not None
+        and re.search(r"\bdogs?\b", s.lower()) is None,
+        "follows_b": lambda s: re.search(r"\bdogs?\b", s.lower()) is not None
+        and re.search(r"\bcats?\b", s.lower()) is None,
+    },
+    {
+        "name": "topic_finance",
+        "a": "Briefly explain inflation in one sentence.",
+        "b": "Briefly explain deflation in one sentence.",
+        "follows_a": lambda s: "inflation" in s.lower() and "deflation" not in s.lower(),
+        "follows_b": lambda s: "deflation" in s.lower() and "inflation" not in s.lower(),
+    },
+    {
+        "name": "language_alt",
+        "a": "Say 'Hello, how are you?' in Spanish.",
+        "b": "Say 'Hello, how are you?' in Italian.",
+        "follows_a": lambda s: any(
+            x in s.lower()
+            for x in ("hola", "cómo estás", "como estas", "qué tal", "que tal")
+        )
+        and not any(
+            x in s.lower() for x in ("ciao", "come stai", "come sta", "buongiorno")
+        ),
+        "follows_b": lambda s: any(
+            x in s.lower() for x in ("ciao", "come stai", "come sta", "buongiorno")
+        )
+        and not any(
+            x in s.lower()
+            for x in ("hola", "cómo estás", "como estas", "qué tal", "que tal")
+        ),
     },
 ]
 
@@ -502,7 +635,7 @@ def main() -> None:
         "--samples-per-cell",
         type=int,
         default=5,
-        help="Samples per counterbalance cell. 4 cells per pair × 7 pairs → N * 28 per model.",
+        help="Samples per counterbalance cell. 4 cells per pair × 21 pairs → N * 84 per model.",
     )
     parser.add_argument(
         "--logdir",
