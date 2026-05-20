@@ -102,6 +102,18 @@ def parse_cli_args() -> argparse.Namespace:
             "audio-capable model like openai/gpt-audio-mini)."
         ),
     )
+    parser.add_argument(
+        "--defense",
+        dest="defense",
+        default="none",
+        choices=["none", "spotlighting", "secalign"],
+        help=(
+            "Optional defense baseline. 'spotlighting' applies the "
+            "datamarking-style spotlighting transform from arXiv:2403.14720 "
+            "to the text condition. 'secalign' runs the text condition "
+            "through facebook/Meta-SecAlign-70B."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -117,6 +129,8 @@ def main() -> None:
         console.log("[yellow]Render style: chat-UI[/yellow]")
 
     console.log(f"Using model: [bold]{get_active_model_id()}[/bold]")
+    if args.defense != "none":
+        console.log(f"[yellow]Defense: {args.defense}[/yellow]")
 
     from injection.runner import run_injection_scenario
     conditions = [c.strip() for c in args.conditions.split(",") if c.strip()]
@@ -125,6 +139,7 @@ def main() -> None:
         template_idx_filter=args.template_idx,
         log_root=args.log_root,
         conditions=conditions,
+        defense=args.defense,
     )
 
 
