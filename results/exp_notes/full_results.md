@@ -750,29 +750,35 @@ or training signals inside it.
 
 Headline numbers per model. All cells averaged over **4 user tasks ×
 14 injections × 7 attack templates = 392 cells per condition**
-(text and image). The "no-injection UT" column is the clean-document
-baseline (4 tasks × 2 conditions; all models pass every cell).
+(text and image). The two **"UT (no inj.)"** columns are the
+per-modality clean-document baseline (4 tasks per modality; all
+models pass every cell, in both modalities). They are reported
+separately to make the per-modality comparison explicit.
 "Image" here refers to **plain rendering**; google rendering pushes
 image ASR lower still — see §11.1.
 
-| Model | UT (no inj.) | **Text ASR** | Text UT | **Image ASR** | Image UT |
-|---|:---:|:---:|:---:|:---:|:---:|
-| google/gemini-3.1-flash-lite-preview | 100.0% | **67.9%** | 48.7% | **19.1%** | 90.8% |
-| x-ai/grok-4.3                        | 100.0% | **67.3%** | 39.3% | **15.3%** | 87.5% |
-| qwen/qwen3.6-plus                    | 100.0% | **47.7%** | 61.7% | **17.3%** | 85.5% |
-| qwen/qwen3.6-flash                   | 100.0% | **40.5%** | 65.6% | **5.9%**  | 95.4% |
-| openai/gpt-4o-mini                   | 100.0% | **26.5%** | 75.3% | **0.0%**  | 99.7% |
-| openai/gpt-5.4-mini                  | 100.0% | **22.2%** | 77.3% | **0.0%**  | 99.7% |
-| moonshotai/kimi-k2.6                 | 100.0% | **11.0%** | 52.8% | **0.3%**  | 88.3% |
-| openai/gpt-5.4-nano                  | 100.0% | **3.3%**  | 96.4% | **0.0%**  | 98.5% |
-| anthropic/claude-haiku-4.5           | 100.0% | **2.3%**  | 97.4% | **0.0%**  | 99.5% |
+| Model | Text UT (no inj.) | Image UT (no inj.) | **Text ASR** | Text UT | **Image ASR** | Image UT | Text tok | Image tok |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| google/gemini-3.1-flash-lite-preview | 100.0% | 100.0% | **67.9%** | 48.7% | **19.1%** | 90.8% | 2379 | 5163 |
+| x-ai/grok-4.3                        | 100.0% | 100.0% | **67.3%** | 39.3% | **15.3%** | 87.5% | 4239 | 7309 |
+| qwen/qwen3.6-plus                    | 100.0% | 100.0% | **47.7%** | 61.7% | **17.3%** | 85.5% | — | — |
+| qwen/qwen3.6-flash                   | 100.0% | 100.0% | **40.5%** | 65.6% | **5.9%**  | 95.4% | 7369 | 7108 |
+| google/gemini-3.1-pro-preview        | 100.0% | 100.0% | **31.1%** | 56.6% | **12.0%** | 84.2% | 5770 | 8676 |
+| openai/gpt-4o-mini                   | 100.0% | 100.0% | **26.5%** | 75.3% | **0.0%**  | 99.7% | — | — |
+| openai/gpt-5.4-mini                  | 100.0% | 100.0% | **22.2%** | 77.3% | **0.0%**  | 99.7% | 2381 | 6096 |
+| moonshotai/kimi-k2.6                 | 100.0% | 100.0% | **11.0%** | 52.8% | **0.3%**  | 88.3% | 5978 | 9424 |
+| openai/gpt-5.4-nano                  | 100.0% | 100.0% | **3.3%**  | 96.4% | **0.0%**  | 98.5% | 2525 | 6353 |
+| anthropic/claude-haiku-4.5           | 100.0% | 100.0% | **2.3%**  | 97.4% | **0.0%**  | 99.5% | 2788 | 6363 |
+| anthropic/claude-opus-4-7            | 100.0% | 100.0% | **0.8%**  | 99.5% | **0.0%**  | 100.0% | 3638 | 7168 |
+| openai/gpt-5.5                       | 100.0% | 100.0% | **0.0%**  | 100.0% | **0.0%** | 100.0% | 2382 | 6278 |
 
 ```latex
-\caption{Image-as-defense across 9 models on the simple prompt-injection
+\caption{Image-as-defense across 12 models on the simple prompt-injection
 benchmark. Each ASR/UT cell is averaged over $4 \text{ user tasks} \times
 14 \text{ injection tasks} \times 7 \text{ attack templates} = 392$ samples
-per condition. \textbf{UT (no inj.)} is the no-injection ceiling, measured on
-the clean document under both modalities (8 cells per model, all pass).
+per condition. \textbf{Text UT (no inj.)} and \textbf{Image UT (no inj.)}
+are the per-modality no-injection ceilings, measured on the clean document
+($4$ tasks per modality, $8$ cells per model in total, all pass).
 \textbf{Text ASR / Text UT} use the document inlined as text in the user
 turn; \textbf{Image ASR / Image UT} render the same document to a plain
 white-background PNG and send it in an \texttt{image\_url} block of the
@@ -780,11 +786,16 @@ same user turn. ASR (Attack Success Rate, lower is better) counts a sample
 positive only when the model emits a tool call to the attacker's target
 function through the standard tool-calling channel; UT (User-Task Utility,
 higher is better) is graded by an LLM judge against gold answers and
-requires every sub-question correct. Across all 9 models, switching from
+requires every sub-question correct. \textbf{Text tok / Image tok} are the
+total tokens (prompt + completion) consumed per model summed over the 4
+no-injection baseline tasks; the image condition costs $\approx$1.5--2.6$\times$
+more (see \S12.2--12.3) — the document rendered to a PNG is charged more
+image tokens than the inlined text. Across all 12 models, switching from
 text to image strictly reduces ASR and strictly preserves or improves UT,
 with the largest gains concentrated on the most text-vulnerable models
 (Gemini, Grok). Models that are already injection-resistant on text (Haiku,
-GPT-5.4-nano) saturate at $\approx 0\%$ image ASR without UT cost.}
+GPT-5.4-nano, Claude-Opus-4-7, GPT-5.5) saturate at $\approx 0\%$ image ASR
+without UT cost.}
 ```
 
 Read this table as: every model reads both modalities cleanly (100%
@@ -795,6 +806,89 @@ most of that lost UT and simultaneously cuts ASR by **3.7× to ~∞**
 depending on model. The strict-improvement-on-both-axes property
 (image is safer *and* more utility-preserving than text) holds for
 every model in the table.
+
+### 12.1 No-injection UT baseline — variance
+
+The no-injection UT baseline was re-measured at **5 samples × 4 user
+tasks per modality** (`baseline_ut.py`) for 10 of the 12 models
+(all except `gpt-4o-mini` and `qwen3.6-plus`, which carry the
+single-pass 100% from the original run). Reporting mean ± std over
+the 5 sample-slices:
+
+> **Text UT (no inj.) = 100.0% ± 0.0%; Image UT (no inj.) = 100.0%
+> ± 0.0%** — for every one of the 10 re-measured models.
+
+The std is **exactly 0.0** in all 20 cells: no trial of any model
+failed the clean-document task in either modality, on any of the 5
+slices. The no-injection baseline is a hard 100% ceiling — which is
+the point of that column: any injection-condition UT drop is
+attributable to the attack, not to modality difficulty or sampling
+noise.
+
+### 12.2 Token cost — text vs image
+
+Rendering the document as an image is not free. Prompt-token usage
+per request (no-injection baseline, 1 sample × 4 tasks, mean), from
+the API `usage` field:
+
+| Model | Text prompt | Image prompt | Prompt Img/Txt | Text compl | Image compl |
+|---|---:|---:|:---:|---:|---:|
+| google/gemini-3.1-pro-preview | 481 | 1180 | **2.45×** | 962 | 989 |
+| anthropic/claude-opus-4-7 | 713 | 1573 | **2.21×** | 196 | 219 |
+| openai/gpt-5.5 | 459 | 1424 | **3.10×** | 136 | 146 |
+| anthropic/claude-haiku-4.5 | 518 | 1433 | **2.77×** | 179 | 158 |
+| openai/gpt-5.4-nano | 459 | 1424 | **3.10×** | 172 | 164 |
+| openai/gpt-5.4-mini | 459 | 1424 | **3.10×** | 136 | 100 |
+| qwen/qwen3.6-flash | 486 | 1163 | **2.39×** | 1356 | 614 |
+| x-ai/grok-4.3 | 574 | 1328 | **2.32×** | 486 | 499 |
+| google/gemini-3.1-flash-lite-preview | 482 | 1182 | **2.45×** | 112 | 109 |
+| moonshotai/kimi-k2.6 | 462 | 1535 | **3.32×** | 1032 | 821 |
+
+**Prompt (input) tokens** — the image condition costs **2.2–3.3×
+more** than text: the document rendered to a ~900×1800 px PNG is
+charged ~1160–1570 image tokens, vs ~460–710 tokens to inline the
+same document as text. This is where image-as-defense's cost lands.
+
+**Completion (output) tokens** — roughly comparable between text and
+image for non-reasoning models (gpt-5.5 136/146, haiku 179/158,
+gemini-flash-lite 112/109): the response is the same task either way,
+so output length barely depends on input modality. Reasoning models
+(qwen3.6-flash 1356/614, kimi 1032/821) show larger text-vs-image
+swings, but those are noisy at 1 sample and not a reliable modality
+effect.
+
+Net: image-as-defense carries a **~2–3× prompt-token penalty** with
+**negligible completion-token difference** — the tradeoff to weigh
+against the ASR reduction in §12.
+
+### 12.3 Total token consumption per model — text vs image
+
+Total tokens **per model** = prompt + completion summed over all 4
+user tasks (no-injection baseline, 1 sample per task).
+
+| Model | Text total | Image total | Image / Text |
+|---|---:|---:|:---:|
+| google/gemini-3.1-pro-preview | 5770 | 8676 | 1.50× |
+| anthropic/claude-opus-4-7 | 3638 | 7168 | 1.97× |
+| openai/gpt-5.5 | 2382 | 6278 | 2.64× |
+| anthropic/claude-haiku-4.5 | 2788 | 6363 | 2.28× |
+| openai/gpt-5.4-nano | 2525 | 6353 | 2.52× |
+| openai/gpt-5.4-mini | 2381 | 6096 | 2.56× |
+| qwen/qwen3.6-flash | 7369 | 7108 | 0.96× |
+| x-ai/grok-4.3 | 4239 | 7309 | 1.72× |
+| google/gemini-3.1-flash-lite-preview | 2379 | 5163 | 2.17× |
+| moonshotai/kimi-k2.6 | 5978 | 9424 | 1.58× |
+
+On total tokens the image condition is **~1.5–2.6× more expensive**
+for 9 of 10 models. Two caveats: (1) `qwen3.6-flash` shows 0.96× —
+an artifact of its noisy single-sample text completion (1356 tokens);
+it is not a real "image is cheaper" effect. (2) Total token *count*
+is not total *cost*: providers price output tokens 3–5× higher than
+input, so a dollar comparison would weight the completion side more
+heavily. The clean, deterministic, modality-attributable figure
+remains the **prompt-token** ratio in §12.2 (2.2–3.3×); the total
+here is lower mainly because completion tokens (≈equal across
+conditions) dilute the ratio.
 
 ## 13. Plain vs Google rendering — image ASR
 

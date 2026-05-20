@@ -49,10 +49,15 @@ def _call_openai_like(model_id, content):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": content},
         ],
-        max_completion_tokens=1024,
-        timeout=60,
+        max_completion_tokens=8192,
+        timeout=120,
     )
-    return (resp.choices[0].message.content or "").strip()
+    u = resp.usage
+    usage = {
+        "prompt_tokens": getattr(u, "prompt_tokens", None),
+        "completion_tokens": getattr(u, "completion_tokens", None),
+    }
+    return (resp.choices[0].message.content or "").strip(), usage
 
 
 def _call_anthropic(model_id, content):
@@ -81,16 +86,22 @@ def _call_anthropic(model_id, content):
         model=model,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": anth_content}],
-        max_tokens=1024,
-        timeout=60,
+        max_tokens=8192,
+        timeout=120,
     )
-    return "\n".join(
+    text = "\n".join(
         getattr(b, "text", "") for b in r.content
         if getattr(b, "type", None) == "text"
     ).strip()
+    usage = {
+        "prompt_tokens": getattr(r.usage, "input_tokens", None),
+        "completion_tokens": getattr(r.usage, "output_tokens", None),
+    }
+    return text, usage
 
 
 def call_model(model_id, content):
+    """Returns (response_text, usage_dict)."""
     if model_id.startswith("anthropic/"):
         return _call_anthropic(model_id, content)
     return _call_openai_like(model_id, content)
@@ -122,9 +133,13 @@ def run_baseline(model_id, n_samples, logdir):
                 console.print(f"[dim]{tag}[/dim]")
                 try:
                     content = build_content(task_prompt, document, condition)
-                    response = call_model(model_id, content)
+                    response, usage = call_model(model_id, content)
                     ut = grade_user_task(task_type, response)
-                    results[condition].append({"ut": ut, "response": response})
+                    results[condition].append({
+                        "ut": ut, "response": response,
+                        "prompt_tokens": usage["prompt_tokens"],
+                        "completion_tokens": usage["completion_tokens"],
+                    })
                 except Exception as e:
                     console.print(f"  [red]error:[/red] {e}")
                     results[condition].append({"ut": None, "error": str(e)})
@@ -134,15 +149,25 @@ def run_baseline(model_id, n_samples, logdir):
     table.add_column("Condition", style="bold")
     table.add_column("UT", justify="right")
     table.add_column("N", justify="right")
+    table.add_column("Prompt tok (mean)", justify="right")
+    table.add_column("Completion tok (mean)", justify="right")
+
+    def _mean(xs):
+        xs = [x for x in xs if x is not None]
+        return sum(xs) / len(xs) if xs else None
 
     for cond in ("text", "image"):
         valid = [r for r in results[cond] if r.get("ut") is not None]
         n = len(valid)
         passed = sum(1 for r in valid if r["ut"])
+        pt = _mean([r.get("prompt_tokens") for r in valid])
+        ct = _mean([r.get("completion_tokens") for r in valid])
         table.add_row(
             cond,
             f"{passed}/{n} = {passed/n*100:.1f}%" if n else "N/A",
             str(n),
+            f"{pt:.0f}" if pt is not None else "-",
+            f"{ct:.0f}" if ct is not None else "-",
         )
     console.print()
     console.print(table)
@@ -158,7 +183,9 @@ def run_baseline(model_id, n_samples, logdir):
             "timestamp": ts,
             "n_samples": n_samples,
             "results": {
-                cond: [{"ut": r.get("ut"), "error": r.get("error")}
+                cond: [{"ut": r.get("ut"), "error": r.get("error"),
+                        "prompt_tokens": r.get("prompt_tokens"),
+                        "completion_tokens": r.get("completion_tokens")}
                        for r in results[cond]]
                 for cond in ("text", "image")
             },

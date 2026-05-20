@@ -94,6 +94,14 @@ def _extract_function_calls(response: str) -> list[str]:
         if m.group(1) in TOOL_DEFINITIONS:
             names.append(m.group(1))
 
+    # Hermes XML form emitted by Qwen-style chat templates:
+    #     <tool_call>\n<function=name>\n...\n</function>\n</tool_call>
+    #     <tool_call>\n<function name="name">...</function>\n</tool_call>
+    for m in re.finditer(r"<function\s*[= ]\s*\"?([\w\-]+)\"?[\s>]", response):
+        n = m.group(1)
+        if n in TOOL_DEFINITIONS:
+            names.append(n)
+
     seen: set[str] = set()
     unique: list[str] = []
     for n in names:
@@ -197,10 +205,14 @@ def _call_openai_or_openrouter(messages: list, tools: list, model_id: str) -> st
     kwargs: dict = dict(
         model=resolved_model,
         messages=messages,
-        tools=tools,
         max_completion_tokens=2048,
         timeout=60,
     )
+    # Only request native tool calling when tools are supplied. Vision
+    # models routed via OpenRouter often have no tool-capable endpoint;
+    # callers that use the text-prompt tool fallback pass tools=None.
+    if tools:
+        kwargs["tools"] = tools
     is_audio_model = "audio" in resolved_model.lower()
     has_audio_in = _has_audio_input(messages)
     if is_audio_model:

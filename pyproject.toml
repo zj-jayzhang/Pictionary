@@ -5,10 +5,25 @@ description = "Does rendering untrusted content as an image defend against promp
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "accelerate>=1.13.0",
     "anthropic>=0.40.0",
     "matplotlib>=3.10.9",
     "openai>=2.0.0",
     "pillow>=11.0.0",
     "python-dotenv>=1.0.0",
     "rich>=14.0.0",
+    "torch>=2.11",
+    "torchvision>=0.26",
+    "transformers>=5.8.1",
 ]
+
+# System driver here supports up to CUDA 12.8; pin PyTorch to the cu128
+# wheels rather than the default PyPI (cu130) wheels.
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
