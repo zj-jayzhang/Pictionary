@@ -9,6 +9,8 @@ simple_inj_logs/
 !README*.png
 .claude/
 tmp/
-results/*
-!results/exp_notes/
+old_results/
+more_exp/
+results/
+.vscode/
 
