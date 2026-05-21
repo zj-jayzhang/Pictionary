@@ -640,7 +640,7 @@ def main() -> None:
     parser.add_argument(
         "--logdir",
         type=str,
-        default="results/preference_logs",
+        default="exp_runs/preference_logs",
     )
     parser.add_argument(
         "--judge-model",

@@ -22,7 +22,7 @@ Usage::
     uv run python local_model.py --model Qwen/Qwen3.5-0.8B
     uv run python local_model.py --model Qwen/Qwen3.5-9B \\
         --model Qwen/Qwen3.5-9B-Base \\
-        --conditions text,image --log-root results/local_logs
+        --conditions text,image --log-root exp_runs/local_logs
     uv run python local_model.py --model google/gemma-3-4b-it \\
         --task-type summarize --template-idx 0 --conditions text,image
 """
@@ -826,7 +826,7 @@ def parse_cli() -> argparse.Namespace:
         help="Comma-separated: text,image (audio not supported locally).",
     )
     p.add_argument(
-        "--log-root", default="results/local_logs",
+        "--log-root", default="exp_runs/local_logs",
         help="Per-sample logs go under <log-root>/<model>/; "
              "summaries under <log-root>/_summaries/.",
     )

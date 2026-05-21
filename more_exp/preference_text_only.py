@@ -176,7 +176,7 @@ def main() -> None:
         help="Model id to test. Repeat for multiple. If omitted, the 6 defaults.",
     )
     parser.add_argument("--samples-per-cell", type=int, default=5)
-    parser.add_argument("--logdir", type=str, default="results/preference_text_only_logs")
+    parser.add_argument("--logdir", type=str, default="exp_runs/preference_text_only_logs")
     parser.add_argument(
         "--judge-model",
         type=str,

@@ -199,7 +199,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", action="append")
     parser.add_argument("--samples", type=int, default=5)
-    parser.add_argument("--logdir", default="results/baseline_ut_logs")
+    parser.add_argument("--logdir", default="exp_runs/baseline_ut_logs")
     args = parser.parse_args()
 
     models = args.model if args.model else DEFAULT_MODELS

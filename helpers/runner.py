@@ -512,7 +512,7 @@ TTS_INSTRUCTIONS = (
 # change (e.g. new model, new instructions, header fix).
 _TTS_CACHE_VERSION = "v2"
 _TTS_MAX_CHARS = 3800  # OpenAI TTS input limit is 4096; leave a small buffer
-_AUDIO_CACHE_DIR = "results/audio_cache"
+_AUDIO_CACHE_DIR = "exp_runs/audio_cache"
 
 
 def _chunk_for_tts(text: str, max_chars: int = _TTS_MAX_CHARS) -> list[str]:

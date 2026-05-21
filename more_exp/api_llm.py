@@ -288,7 +288,7 @@ def parse_cli() -> argparse.Namespace:
         help="Comma-separated: text,image.",
     )
     p.add_argument(
-        "--log-root", default="results/api_logs",
+        "--log-root", default="exp_runs/api_logs",
         help="Per-sample logs under <log-root>/<model>/; "
              "summaries under <log-root>/_summaries/.",
     )

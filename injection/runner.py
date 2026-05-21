@@ -1036,8 +1036,8 @@ def run_injection_scenario(
 
     If ``log_root`` is set, per-sample logs land under ``<log_root>/`` and
     aggregate run summaries under ``<log_root>/_summaries/``. Otherwise the
-    default split between ``results/simple_inj_logs/`` (per-sample) and
-    ``results/logs/injection/`` (aggregate) is used.
+    default split between ``exp_runs/simple_inj_logs/`` (per-sample) and
+    ``exp_runs/logs/injection/`` (aggregate) is used.
     """
     defense = _normalize_defense(defense)
     model_id = get_active_model_id()
@@ -1052,8 +1052,8 @@ def run_injection_scenario(
         simple_log_root = log_root
         aggregate_log_dir = os.path.join(log_root, "_summaries")
     else:
-        simple_log_root = "results/simple_inj_logs"
-        aggregate_log_dir = "results/logs/injection"
+        simple_log_root = "exp_runs/simple_inj_logs"
+        aggregate_log_dir = "exp_runs/logs/injection"
 
     console.rule(f"[bold]Mode: function-call injection ({backend})[/bold]")
     console.log(f"Model: [bold]{model_id}[/bold]   Backend: {backend}")
@@ -1129,7 +1129,8 @@ def run_injection_scenario(
                 full_content = _embed_injection(content, wrapped_injection)
                 if needs_image:
                     content_img = create_content_image(full_content)
-                    content_img.save("results/last_render.png")
+                    os.makedirs("exp_runs", exist_ok=True)
+                    content_img.save("exp_runs/last_render.png")
                 else:
                     content_img = None
                 if needs_audio:

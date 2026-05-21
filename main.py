@@ -2,8 +2,8 @@
 
 Compares text vs image modality for untrusted document content against
 prompt-injection attacks. Writes per-sample JSON logs under
-``results/simple_inj_logs/<model>/...`` and an aggregate summary under
-``results/logs/injection/``.
+``exp_runs/simple_inj_logs/<model>/...`` and an aggregate summary under
+``exp_runs/logs/injection/``.
 """
 
 import argparse
@@ -86,7 +86,7 @@ def parse_cli_args() -> argparse.Namespace:
         default=None,
         help=(
             "Root directory for per-sample and aggregate logs. Defaults "
-            "to results/simple_inj_logs (per-sample) + results/logs/injection "
+            "to exp_runs/simple_inj_logs (per-sample) + exp_runs/logs/injection "
             "(aggregate). When set, both go under <log-root>/ and "
             "<log-root>/_summaries/."
         ),
