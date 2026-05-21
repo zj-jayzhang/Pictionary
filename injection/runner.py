@@ -66,6 +66,7 @@ _SECALIGN_BASE_MODEL_ID = os.environ.get(
 _SECALIGN_MAX_NEW_TOKENS = int(os.environ.get("SECALIGN_MAX_NEW_TOKENS", "8192"))
 _SECALIGN_TENSOR_PARALLEL_SIZE = int(os.environ.get("SECALIGN_TENSOR_PARALLEL_SIZE", "4"))
 _MAX_TOOL_ROUNDS = int(os.environ.get("INJECTION_MAX_TOOL_ROUNDS", "4"))
+_EMPTY_RESPONSE_RETRIES = int(os.environ.get("INJECTION_EMPTY_RESPONSE_RETRIES", "5"))
 
 _secalign_llm = None
 _secalign_sampling_params = None
@@ -749,6 +750,12 @@ def _format_response_trace(response_trace: list[str]) -> str:
     )
 
 
+def _visible_response_text(response: str | None) -> str:
+    if not response:
+        return ""
+    return re.sub(r"</?assistant_turn_\d+>", "", response).strip()
+
+
 def _build_trace_continuation_messages(
     messages: list,
     response_trace: list[str],
@@ -802,12 +809,19 @@ def _run_model_to_completion(
     current_messages = messages
 
     for round_idx in range(_MAX_TOOL_ROUNDS + 1):
-        response, called_this_turn = _call_model_once(
-            backend=backend,
-            messages=current_messages,
-            tools=tools,
-            model_id=model_id,
-        )
+        empty_retry_count = 0
+        while True:
+            response, called_this_turn = _call_model_once(
+                backend=backend,
+                messages=current_messages,
+                tools=tools,
+                model_id=model_id,
+            )
+            if called_this_turn or _visible_response_text(response):
+                break
+            if empty_retry_count >= _EMPTY_RESPONSE_RETRIES:
+                break
+            empty_retry_count += 1
         response_trace.append(response)
         called_trace.append(called_this_turn)
         _merge_called_functions(called_all, called_this_turn)

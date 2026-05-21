@@ -10,7 +10,7 @@ simple_inj_logs/
 .claude/
 tmp/
 old_results/
-more_exp/
 results/
 .vscode/
+exp_runs/
 
