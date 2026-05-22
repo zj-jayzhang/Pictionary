@@ -106,12 +106,13 @@ def parse_cli_args() -> argparse.Namespace:
         "--defense",
         dest="defense",
         default="none",
-        choices=["none", "spotlighting", "secalign"],
+        choices=["none", "spotlighting", "secalign", "sandwiching"],
         help=(
             "Optional defense baseline. 'spotlighting' applies the "
             "datamarking-style spotlighting transform from arXiv:2403.14720 "
             "to the text condition. 'secalign' runs the text condition "
-            "through facebook/Meta-SecAlign-70B."
+            "through facebook/Meta-SecAlign-70B. 'sandwiching' repeats the "
+            "user task instruction after the document to counter recency bias."
         ),
     )
     return parser.parse_args()

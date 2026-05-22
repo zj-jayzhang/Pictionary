@@ -56,7 +56,8 @@ from injection.data import _INJECTION_SYSTEM_PROMPT
 _DEFENSE_NONE = "none"
 _DEFENSE_SPOTLIGHTING = "spotlighting"
 _DEFENSE_SECALIGN = "secalign"
-_VALID_DEFENSES = {_DEFENSE_NONE, _DEFENSE_SPOTLIGHTING, _DEFENSE_SECALIGN}
+_DEFENSE_SANDWICHING = "sandwiching"
+_VALID_DEFENSES = {_DEFENSE_NONE, _DEFENSE_SPOTLIGHTING, _DEFENSE_SECALIGN, _DEFENSE_SANDWICHING}
 _SPOTLIGHT_MARK = "^"
 _SECALIGN_MODEL_ID = "facebook/Meta-SecAlign-70B"
 _SECALIGN_BASE_MODEL_ID = os.environ.get(
@@ -109,7 +110,12 @@ def _system_prompt_for_condition(condition: str, defense: str | None) -> str:
     return _INJECTION_SYSTEM_PROMPT
 
 
-def _document_text_for_condition(condition: str, full_content: str, defense: str | None) -> str:
+def _document_text_for_condition(
+    condition: str,
+    full_content: str,
+    defense: str | None,
+    task_prompt: str = "",
+) -> str:
     defense = _normalize_defense(defense)
     if condition == "text" and defense == _DEFENSE_SPOTLIGHTING:
         spotlighted = _spotlight_document_text(full_content)
@@ -120,6 +126,12 @@ def _document_text_for_condition(condition: str, full_content: str, defense: str
             f"{spotlighted}\n"
             "</spotlighted_document>"
         )
+    if condition == "text" and defense == _DEFENSE_SANDWICHING:
+        reminder = task_prompt.strip() if task_prompt else "Please complete the task described above."
+        return (
+            f"{full_content}\n\n"
+            f"Remember, your task is: {reminder}"
+        )
     return full_content
 
 
@@ -129,6 +141,8 @@ def _condition_label(condition: str, defense: str | None = None) -> str:
         return "Text+Spotlighting"
     if condition == "text" and defense == _DEFENSE_SECALIGN:
         return "Text+SecAlign"
+    if condition == "text" and defense == _DEFENSE_SANDWICHING:
+        return "Text+Sandwiching"
     return _CONDITION_LABELS[condition]
 
 
@@ -138,6 +152,8 @@ def _condition_log_key(condition: str, defense: str | None = None) -> str:
         return "text_spotlighting"
     if condition == "text" and defense == _DEFENSE_SECALIGN:
         return "text_secalign"
+    if condition == "text" and defense == _DEFENSE_SANDWICHING:
+        return "text_sandwiching"
     return condition
 
 
@@ -230,7 +246,7 @@ def _build_injection_messages(
     """
     system_prompt = _system_prompt_for_condition(condition, defense)
     if condition == "text":
-        document_text = _document_text_for_condition(condition, full_content, defense)
+        document_text = _document_text_for_condition(condition, full_content, defense, user_task)
         return [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"{user_task}\n\n{document_text}"},
