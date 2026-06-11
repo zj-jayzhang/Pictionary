@@ -1,5 +1,7 @@
 # Pictionary
 
+This is the code for testing text vs. image ASR on DirectInject with 7 attack methods.
+
 Does rendering untrusted third-party content as an image (or audio) defend against prompt injection?
 
 The benchmark tests three delivery modalities for the same document content:
