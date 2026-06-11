@@ -24,6 +24,39 @@ The benchmark:
     questions? (higher is better; graded by an LLM judge against gold
     answers)
 
+## Results
+
+ASR = Attack Success Rate (↓ lower is better). UT = User Task success rate (↑ higher is better). Each cell is over 56 samples (4 tasks × 14 attack templates × 1 injection per template).
+
+### Image as defense
+
+| Model | Text ASR | Image ASR | Text UT | Image UT |
+|---|---|---|---|---|
+| openai/gpt-5.4-nano | 0.0% | 0.0% | 100.0% | 100.0% |
+| openai/gpt-5.4-mini | 26.8% | **0.0%** | 100.0% | 100.0% |
+| x-ai/grok-4.3 | 100.0% | **1.8%** | 100.0% | 100.0% |
+| google/gemini-3.1-flash-lite-preview | 19.6% | 7.1% | 100.0% | 100.0% |
+| qwen/qwen3.6-plus | 16.1% | 5.4% | 98.2% | 100.0% |
+| anthropic/claude-haiku-4.5 | 0.0% | 0.0% | 96.4% | 98.2% |
+| google/gemini-3.1-pro-preview | 8.9% | 0.0% | 50.0% | 94.6% |
+| moonshotai/kimi-k2.6 | 1.8% | 3.6% | 10.7% | 42.9% |
+
+### Audio as defense
+
+| Model | Text ASR | Audio ASR | Text UT | Audio UT |
+|---|---|---|---|---|
+| openai/gpt-audio-mini | 0.0% | 0.0% | 100.0% | 91.1% |
+| dashscope/qwen3.5-omni-plus | 62.5% | **17.9%** | 100.0% | 85.7% |
+
+### Comparison with text-based defenses (n=14 per model)
+
+| Model | Text ASR | Sandwiching ASR | Spotlighting ASR |
+|---|---|---|---|
+| openai/gpt-5.4-mini | 26.8% | 21.4% | 0.0% |
+| google/gemini-3.1-flash-lite-preview | 19.6% | 100.0% | 14.3% |
+| anthropic/claude-haiku-4.5 | 0.0% | 0.0% | 0.0% |
+| moonshotai/kimi-k2.6 | 1.8% | 85.7% | 7.1% |
+
 ## Setup
 
 ```bash
