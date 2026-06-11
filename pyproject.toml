@@ -14,7 +14,9 @@ dependencies = [
     "rich>=14.0.0",
     "torch>=2.11",
     "torchvision>=0.26",
+    "qwen-vl-utils>=0.0.14",
     "transformers>=5.8.1",
+    "seaborn>=0.13.2",
 ]
 
 # System driver here supports up to CUDA 12.8; pin PyTorch to the cu128
