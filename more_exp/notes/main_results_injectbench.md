@@ -207,3 +207,37 @@ this looks like a Kimi/provider behavior under adversarial prompts rather than
 a local parser or judge issue. Image rendering weakens those textual control
 structures, so the model more often produces a normal user-task answer, giving
 higher image UT.
+
+## 4. Best-of-7 ASR
+
+For each of the 56 (task × injection) pairs, this table asks: did **any** of
+the 7 attack templates succeed? Denominator is 56 = 4 tasks × 14 injections.
+A model is vulnerable to an injection if at least one template can exploit it.
+
+| Model | Text best-of-7 ASR | Image best-of-7 ASR |
+| --- | ---: | ---: |
+| `openai/gpt-5.4-nano` | 8/56 (14.3%) | 0/56 (0.0%) |
+| `openai/gpt-5.4-mini` | 42/56 (75.0%) | 0/56 (0.0%) |
+| `anthropic/claude-haiku-4.5` | 10/56 (17.9%) | 0/56 (0.0%) |
+| `google/gemini-3.1-pro-preview` | 55/56 (98.2%) | 31/56 (55.4%) |
+| `google/gemini-3.1-flash-lite-preview` | 56/56 (100.0%) | 26/56 (46.4%) |
+| `x-ai/grok-4.3` | 56/56 (100.0%) | 36/56 (64.3%) |
+| `qwen/qwen3.6-plus` | 54/56 (96.4%) | 33/56 (58.9%) |
+| `moonshotai/kimi-k2.6` | 45/56 (80.4%) | 4/56 (7.1%) |
+
+Key observations:
+
+- **Image condition substantially reduces coverage** for all models. The three
+  models with 0% image best-of-7 ASR (gpt-5.4-nano, gpt-5.4-mini, claude-haiku-4.5)
+  are completely immune to injection via the image channel across all 56
+  injection targets.
+- **Text best-of-7 is far higher than per-template ASR** for some models. For
+  example, `gpt-5.4-mini` has 25.3% per-template text ASR but 75.0% best-of-7
+  — meaning many injection targets are exploitable by *some* template even if
+  no single template dominates.
+- **Gemini-flash, Grok, and Qwen are nearly fully exploitable in text**: all
+  three reach ≥96% coverage, meaning an attacker who can try all templates can
+  compromise almost any injection target against these models.
+- **Kimi** is the most resistant in the image condition (4/56, 7.1%) despite
+  moderate text exposure, consistent with its image UT degradation coming from
+  empty-response artifacts rather than successful attacks.
